@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookStore - Aplikasi Toko Buku Lengkap</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: 600; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- TOP ANNOUNCEMENT BAR / MODE SWITCHER -->
+    <div class="bg-slate-900 text-white text-xs py-2 px-4 flex flex-wrap justify-between items-center border-b border-slate-800">
+        <div class="flex items-center gap-2">
+            <span class="bg-blue-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Status Simulasi</span>
+            <span>Aplikasi Fullstack HTML, CSS, JS (Frontend) & Dynamic SQL Emulator</span>
+        </div>
+        <div class="flex items-center gap-4 mt-1 sm:mt-0">
+            <button onclick="toggleBackendCodeModal()" class="text-amber-400 hover:text-amber-300 font-medium flex items-center gap-1">
+                <i class="fa-solid fa-code"></i> Lihat Kode PHP & MySQL Native
+            </button>
+            <span class="text-slate-600">|</span>
+            <div id="userInfoHeader" class="text-slate-300">
+                <!-- User Status Populated via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN NAVBAR -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Logo -->
+                <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('home')">
+                    <div class="bg-blue-600 text-white p-2.5 rounded-xl shadow-md">
+                        <i class="fa-solid fa-book-open text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">PustakaKu</span>
+                        <span class="text-xs block text-slate-400 -mt-1">BookStore Digital</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+                    <button onclick="navigateTo('home')" class="hover:text-blue-600 transition" id="nav-home">Beranda</button>
+                    <button onclick="navigateTo('catalog')" class="hover:text-blue-600 transition" id="nav-catalog">Katalog Buku</button>
+                    <button onclick="navigateTo('about')" class="hover:text-blue-600 transition" id="nav-about">About Us</button>
+                    <button onclick="navigateTo('contact')" class="hover:text-blue-600 transition" id="nav-contact">Contact Admin</button>
+                    
+                    <!-- Admin Only Menu -->
+                    <div id="adminNav" class="hidden flex items-center gap-4 border-l pl-4 border-slate-200">
+                        <button onclick="navigateTo('admin-dashboard')" class="text-purple-600 font-semibold hover:text-purple-800 flex items-center gap-1">
+                            <i class="fa-solid fa-gauge"></i> Panel Admin
+                        </button>
+                    </div>
+                </nav>
+
+                <!-- Action Buttons / Cart & User Profile -->
+                <div class="flex items-center gap-3">
+                    <!-- Search Input Quick Trigger -->
+                    <div class="relative hidden sm:block w-48 lg:w-64">
+                        <input type="text" id="quickSearch" placeholder="Cari judul/penulis..." onkeyup="handleQuickSearch(event)"
+                            class="w-full bg-slate-100 text-xs text-slate-700 pl-8 pr-3 py-2 rounded-lg border-transparent focus:border-blue-500 focus:bg-white focus:ring-0 transition">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+                    </div>
+
+                    <!-- Cart Button (User) -->
+                    <button id="cartBtn" onclick="navigateTo('cart')" class="relative p-2.5 text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-full transition">
+                        <i class="fa-solid fa-cart-shopping text-lg"></i>
+                        <span id="cartBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
+                    </button>
+
+                    <!-- User Account Action -->
+                    <div id="authButtons" class="flex items-center gap-2">
+                        <button onclick="navigateTo('login')" class="px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-lg transition">Masuk</button>
+                        <button onclick="navigateTo('register')" class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition">Daftar</button>
+                    </div>
+
+                    <div id="userMenu" class="hidden flex items-center gap-2 border-l pl-3 border-slate-200">
+                        <span id="userNameDisplay" class="text-xs font-semibold text-slate-700 hidden sm:inline"></span>
+                        <button onclick="logout()" class="p-2 text-red-500 hover:bg-red-50 rounded-lg text-xs font-medium flex items-center gap-1" title="Keluar">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENT WRAPPER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- ==================== PAGE: HOME ==================== -->
+        <section id="page-home" class="space-y-8">
+            <!-- Hero Banner -->
+            <div class="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-3xl p-8 sm:p-12 text-white shadow-xl relative overflow-hidden">
+                <div class="relative z-10 max-w-2xl space-y-4">
+                    <span class="bg-blue-500/30 text-blue-200 text-xs font-semibold px-3 py-1 rounded-full border border-blue-400/30">Selamat Datang di PustakaKu</span>
+                    <h1 class="text-3xl sm:text-5xl font-extrabold leading-tight">Temukan Buku Favoritmu & Tingkatkan Wawasan</h1>
+                    <p class="text-blue-100 text-sm sm:text-base leading-relaxed">Jelajahi ribuan koleksi buku terlengkap, mulai dari fiksi, pemrograman, bisnis, hingga sains dengan harga terbaik.</p>
+                    <div class="pt-2 flex flex-wrap gap-3">
+                        <button onclick="navigateTo('catalog')" class="px-6 py-3 bg-white text-blue-700 font-bold rounded-xl shadow-md hover:bg-blue-50 transition text-sm">Buka Katalog Buku</button>
+                        <button onclick="navigateTo('about')" class="px-6 py-3 bg-blue-600/50 hover:bg-blue-600 text-white font-semibold rounded-xl border border-blue-400/40 transition text-sm">Tentang Kami</button>
+                    </div>
+                </div>
+                <div class="absolute right-0 bottom-0 top-0 opacity-15 hidden lg:flex items-center pr-12 pointer-events-none">
+                    <i class="fa-solid fa-book-bookmark text-[220px]"></i>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-truck-fast"></i></div>
+                    <div><h3 class="font-bold text-slate-800">Pengiriman Cepat</h3><p class="text-xs text-slate-500">Dikirim langsung ke rumah Anda dengan aman.</p></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div><h3 class="font-bold text-slate-800">100% Original</h3><p class="text-xs text-slate-500">Semua buku dijamin asli dari penerbit.</p></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-headset"></i></div>
+                    <div><h3 class="font-bold text-slate-800">Dukungan Admin</h3><p class="text-xs text-slate-500">Layanan pesan terintegrasi langsung ke admin.</p></div>
+                </div>
+            </div>
+
+            <!-- Highlight Catalog -->
+            <div class="space-y-4">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Buku Populer</h2>
+                        <p class="text-xs text-slate-500">Koleksi terfavorit minggu ini</p>
+                    </div>
+                    <button onclick="navigateTo('catalog')" class="text-sm font-semibold text-blue-600 hover:text-blue-700">Lihat Semua &rarr;</button>
+                </div>
+                <div id="homeFeaturedBooks" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== PAGE: KATALOG BUKU & PENCARIAN ==================== -->
+        <section id="page-catalog" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <h1 class="text-2xl font-bold text-slate-800">Katalog & Pencarian Buku</h1>
+                
+                <!-- Search & Filter Controls -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="relative md:col-span-2">
+                        <input type="text" id="searchInput" oninput="renderCatalog()" placeholder="Cari judul buku, penulis, atau deskripsi..." 
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400"></i>
+                    </div>
+                    <div>
+                        <select id="categoryFilter" onchange="renderCatalog()" class="w-full py-2.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Semua Kategori</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Books Grid -->
+            <div id="catalogGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Populated via JS -->
+            </div>
+        </section>
+
+        <!-- ==================== PAGE: DETAIL BUKU ==================== -->
+        <section id="page-book-detail" class="hidden">
+            <button onclick="navigateTo('catalog')" class="mb-4 text-sm font-semibold text-blue-600 hover:underline flex items-center gap-1">
+                <i class="fa-solid fa-arrow-left"></i> Kembali ke Katalog
+            </button>
+            <div id="bookDetailContent" class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-100">
+                <!-- Detail Content populated via JS -->
+            </div>
+        </section>
+
+        <!-- ==================== PAGE: KERANJANG BELANJA (CART) ==================== -->
+        <section id="page-cart" class="hidden space-y-6">
+            <h1 class="text-2xl font-bold text-slate-800">Keranjang Belanja Buku</h1>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Items Table -->
+                <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div id="cartItemsContainer" class="p-6 space-y-4">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+                <!-- Summary Card -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit space-y-4">
+                    <h2 class="font-bold text-slate-800 text-lg border-b pb-3">Ringkasan Pesanan</h2>
+                    <div class="space-y-2 text-sm text-slate-600">
+                        <div class="flex justify-between"><span>Total Buku:</span><span id="summaryTotalItems">0 item</span></div>
+                        <div class="flex justify-between"><span>Biaya Pengiriman:</span><span class="text-emerald-600 font-semibold">GRATIS</span></div>
+                        <div class="border-t pt-2 mt-2 flex justify-between font-bold text-slate-800 text-base">
+                            <span>Total Bayar:</span>
+                            <span id="summaryTotalPrice" class="text-blue-600">Rp 0</span>
+                        </div>
+                    </div>
+                    <button onclick="checkoutCart()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-credit-card"></i> Proses Checkout
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== PAGE: ABOUT US ==================== -->
+        <section id="page-about" class="hidden max-w-4xl mx-auto space-y-8">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 space-y-6">
+                <div class="text-center max-w-xl mx-auto space-y-2">
+                    <span class="bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1 rounded-full uppercase">Tentang Kami</span>
+                    <h1 class="text-3xl font-extrabold text-slate-800">PustakaKu BookStore</h1>
+                    <p class="text-slate-500 text-sm">Platform toko buku digital terpercaya dengan komitmen menyebarkan pengetahuan di seluruh Indonesia.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                    <div class="border border-slate-100 p-6 rounded-xl bg-slate-50">
+                        <div class="text-blue-600 text-2xl mb-2"><i class="fa-solid fa-bullseye"></i></div>
+                        <h3 class="font-bold text-slate-800 text-lg mb-2">Visi Kami</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">Menjadi pusat literasi digital terlengkap dan terjangkau bagi seluruh masyarakat Indonesia guna meningkatkan kualitas SDM.</p>
+                    </div>
+                    <div class="border border-slate-100 p-6 rounded-xl bg-slate-50">
+                        <div class="text-indigo-600 text-2xl mb-2"><i class="fa-solid fa-rocket"></i></div>
+                        <h3 class="font-bold text-slate-800 text-lg mb-2">Misi Kami</h3>
+                        <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                            <li>Menyediakan buku-buku original dan berkualitas tinggi.</li>
+                            <li>Memberikan pelayanan terbaik dan pengiriman cepat.</li>
+                            <li>Membangun ekosistem jual-beli buku yang efisien.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== PAGE: CONTACT TO ADMIN ==================== -->
+        <section id="page-contact" class="hidden max-w-2xl mx-auto">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 space-y-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">Contact to Admin</h1>
+                    <p class="text-xs text-slate-500">Ada pertanyaan atau kendala? Kirimkan pesan langsung kepada tim Admin kami.</p>
+                </div>
+
+                <form onsubmit="handleContactSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap</label>
+                        <input type="text" id="contactName" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Email Anda</label>
+                        <input type="email" id="contactEmail" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Subjek Pesan</label>
+                        <input type="text" id="contactSubject" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Isi Pesan</label>
+                        <textarea id="contactMessage" rows="4" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition text-sm">
+                        Kirim Pesan ke Admin
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ==================== PAGE: USER LOGIN ==================== -->
+        <section id="page-login" class="hidden max-w-md mx-auto">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 space-y-6">
+                <div class="text-center">
+                    <h1 class="text-2xl font-bold text-slate-800">Masuk Akun</h1>
+                    <p class="text-xs text-slate-500 mt-1">Silakan masuk sebagai **User** atau **Admin**</p>
+                </div>
+
+                <!-- Quick Preset Login Buttons -->
+                <div class="bg-slate-50 p-3 rounded-xl text-xs space-y-2 border border-slate-200">
+                    <p class="font-bold text-slate-700">Akun Uji Coba Cepat:</p>
+                    <div class="flex gap-2">
+                        <button onclick="fillLogin('admin@store.com', 'admin123')" class="flex-1 bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold py-1 px-2 rounded">
+                            As Admin
+                        </button>
+                        <button onclick="fillLogin('budi@gmail.com', 'user123')" class="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold py-1 px-2 rounded">
+                            As User (Budi)
+                        </button>
+                    </div>
+                </div>
+
+                <form onsubmit="handleLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
+                        <input type="email" id="loginEmail" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kata Sandi</label>
+                        <input type="password" id="loginPassword" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition text-sm">
+                        Masuk Sekarang
+                    </button>
+                </form>
+
+                <p class="text-xs text-center text-slate-500">
+                    Belum punya akun? <button onclick="navigateTo('register')" class="text-blue-600 font-bold hover:underline">Registrasi disini</button>
+                </p>
+            </div>
+        </section>
+
+        <!-- ==================== PAGE: USER REGISTRATION ==================== -->
+        <section id="page-register" class="hidden max-w-md mx-auto">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 space-y-6">
+                <div class="text-center">
+                    <h1 class="text-2xl font-bold text-slate-800">Registrasi User Baru</h1>
+                    <p class="text-xs text-slate-500 mt-1">Buat akun untuk mulai berbelanja buku</p>
+                </div>
+
+                <form onsubmit="handleRegister(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap</label>
+                        <input type="text" id="regName" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
+                        <input type="email" id="regEmail" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kata Sandi</label>
+                        <input type="password" id="regPassword" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm transition text-sm">
+                        Daftar Akun Baru
+                    </button>
+                </form>
+
+                <p class="text-xs text-center text-slate-500">
+                    Sudah memiliki akun? <button onclick="navigateTo('login')" class="text-blue-600 font-bold hover:underline">Login disini</button>
+                </p>
+            </div>
+        </section>
+
+        <!-- ==================== PAGE: ADMIN DASHBOARD ==================== -->
+        <section id="page-admin-dashboard" class="hidden space-y-6">
+            <div class="flex flex-wrap justify-between items-center gap-4 bg-purple-900 text-white p-6 rounded-2xl shadow-md">
+                <div>
+                    <h1 class="text-2xl font-bold">Panel Kontrol Admin</h1>
+                    <p class="text-xs text-purple-200">Manajemen Buku, Kategori, dan Daftar Pengguna Terdaftar</p>
+                </div>
+                <span class="bg-purple-700 text-purple-100 text-xs px-3 py-1 rounded-full font-mono">Aktor: ADMIN</span>
+            </div>
+
+            <!-- Admin Navigation Tabs -->
+            <div class="flex border-b border-slate-200 gap-4 text-sm font-semibold">
+                <button onclick="switchAdminTab('books')" id="tabBtn-books" class="pb-3 tab-active">Manajemen Buku</button>
+                <button onclick="switchAdminTab('categories')" id="tabBtn-categories" class="pb-3 text-slate-500 hover:text-slate-800">Manajemen Kategori</button>
+                <button onclick="switchAdminTab('users')" id="tabBtn-users" class="pb-3 text-slate-500 hover:text-slate-800">List User Terdaftar</button>
+                <button onclick="switchAdminTab('messages')" id="tabBtn-messages" class="pb-3 text-slate-500 hover:text-slate-800">Pesan Masuk</button>
+            </div>
+
+            <!-- TAB 1: MANAJEMEN BUKU -->
+            <div id="adminTab-books" class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-bold text-slate-800">Daftar Data Buku</h2>
+                    <button onclick="openBookModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Tambah Buku Baru
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-50 text-slate-700 uppercase text-[10px]">
+                            <tr>
+                                <th class="p-3">ID</th>
+                                <th class="p-3">Cover</th>
+                                <th class="p-3">Judul Buku</th>
+                                <th class="p-3">Kategori</th>
+                                <th class="p-3">Penulis</th>
+                                <th class="p-3">Harga</th>
+                                <th class="p-3">Stok</th>
+                                <th class="p-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminBooksTableBody" class="divide-y divide-slate-100">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 2: MANAJEMEN KATEGORI BUKU -->
+            <div id="adminTab-categories" class="hidden space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-bold text-slate-800">Daftar Kategori Buku</h2>
+                    <button onclick="openCategoryModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Tambah Kategori
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-50 text-slate-700 uppercase text-[10px]">
+                            <tr>
+                                <th class="p-3">ID Kategori</th>
+                                <th class="p-3">Nama Kategori</th>
+                                <th class="p-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminCategoriesTableBody" class="divide-y divide-slate-100">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 3: LIST USER TERDAFTAR -->
+            <div id="adminTab-users" class="hidden space-y-4">
+                <h2 class="font-bold text-slate-800">Pengguna Terdaftar dalam Sistem</h2>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-50 text-slate-700 uppercase text-[10px]">
+                            <tr>
+                                <th class="p-3">ID User</th>
+                                <th class="p-3">Nama Pengguna</th>
+                                <th class="p-3">Email</th>
+                                <th class="p-3">Role</th>
+                                <th class="p-3">Tanggal Registrasi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminUsersTableBody" class="divide-y divide-slate-100">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 4: PESAN DARI USER -->
+            <div id="adminTab-messages" class="hidden space-y-4">
+                <h2 class="font-bold text-slate-800">Pesan Masuk dari Contact Form</h2>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-50 text-slate-700 uppercase text-[10px]">
+                            <tr>
+                                <th class="p-3">Pengirim</th>
+                                <th class="p-3">Email</th>
+                                <th class="p-3">Subjek</th>
+                                <th class="p-3">Pesan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminMessagesTableBody" class="divide-y divide-slate-100">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <p class="font-semibold text-slate-200">PustakaKu BookStore &copy; 2026</p>
+                <p>Aplikasi Toko Buku Terintegrasi dengan HTML, CSS, PHP & MySQL Dynamic Architecture</p>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="navigateTo('about')" class="hover:text-white">About Us</button>
+                <button onclick="navigateTo('contact')" class="hover:text-white">Contact</button>
+                <button onclick="toggleBackendCodeModal()" class="text-amber-400 hover:underline">Database & PHP Source</button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- MODAL: ADD / EDIT BOOK (ADMIN) -->
+    <div id="bookModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-4 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeBookModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h3 id="bookModalTitle" class="text-lg font-bold text-slate-800">Tambah Buku Baru</h3>
+            <form id="bookForm" onsubmit="saveBook(event)" class="space-y-3">
+                <input type="hidden" id="bookId">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Judul Buku</label>
+                    <input type="text" id="bookTitle" required class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Kategori</label>
+                    <select id="bookCategory" required class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:border-blue-500">
+                        <!-- Populated dynamic -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Penulis</label>
+                        <input type="text" id="bookAuthor" required class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Harga (Rp)</label>
+                        <input type="number" id="bookPrice" min="0" required class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Stok</label>
+                        <input type="number" id="bookStock" min="0" required class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">URL Cover Buku</label>
+                        <input type="url" id="bookImage" placeholder="https://..." class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Deskripsi Ringkas</label>
+                    <textarea id="bookDescription" rows="3" required class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:border-blue-500"></textarea>
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs transition">Simpan Data Buku</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT CATEGORY (ADMIN) -->
+    <div id="categoryModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4 relative">
+            <button onclick="closeCategoryModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h3 id="categoryModalTitle" class="text-lg font-bold text-slate-800">Tambah Kategori</h3>
+            <form id="categoryForm" onsubmit="saveCategory(event)" class="space-y-3">
+                <input type="hidden" id="categoryId">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Kategori</label>
+                    <input type="text" id="categoryName" required class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:border-blue-500">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs transition">Simpan Kategori</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: BACKEND PHP & MYSQL CODE VIEWER -->
+    <div id="backendCodeModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 text-slate-100 rounded-2xl shadow-2xl max-w-4xl w-full p-6 space-y-4 relative max-h-[85vh] flex flex-col">
+            <button onclick="toggleBackendCodeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <div>
+                <h3 class="text-lg font-bold text-amber-400 flex items-center gap-2">
+                    <i class="fa-solid fa-database"></i> Rancangan Database MySQL & Script Backend PHP
+                </h3>
+                <p class="text-xs text-slate-400">Kode berikut adalah implementasi native PHP & SQL yang dapat Anda gunakan di server Web (XAMPP/Apache/MySQL).</p>
+            </div>
+
+            <!-- Code Tabs -->
+            <div class="flex gap-2 border-b border-slate-700 text-xs">
+                <button onclick="switchCodeTab('schema')" id="codeTab-schema" class="px-3 py-2 font-mono text-amber-400 border-b-2 border-amber-400">1. schema.sql</button>
+                <button onclick="switchCodeTab('db')" id="codeTab-db" class="px-3 py-2 font-mono text-slate-400">2. db.php</button>
+                <button onclick="switchCodeTab('crud')" id="codeTab-crud" class="px-3 py-2 font-mono text-slate-400">3. admin_crud.php</button>
+            </div>
+
+            <!-- Code Blocks -->
+            <div class="flex-1 overflow-y-auto bg-slate-950 p-4 rounded-xl font-mono text-xs text-emerald-400 space-y-2">
+                <pre id="codeDisplaySchema" class="whitespace-pre-wrap leading-relaxed">
+-- ==========================================================
+-- 1. DATABASE SCHEMA: SQL DDL FOR BOOKSTORE
+-- ==========================================================
+CREATE DATABASE IF NOT EXISTS `bookstore_db`;
+USE `bookstore_db`;
+
+-- Tabel Users (Admin & User)
+CREATE TABLE `users` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(100) NOT NULL,
+  `email` VARCHAR(100) UNIQUE NOT NULL,
+  `password` VARCHAR(255) NOT NULL,
+  `role` ENUM('admin', 'user') DEFAULT 'user',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabel Kategori Buku
+CREATE TABLE `categories` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(100) NOT NULL
+);
+
+-- Tabel Data Buku
+CREATE TABLE `books` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `category_id` INT NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `author` VARCHAR(150) NOT NULL,
+  `price` DECIMAL(10, 2) NOT NULL,
+  `stock` INT DEFAULT 0,
+  `description` TEXT,
+  `image` VARCHAR(255),
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON DELETE CASCADE
+);
+
+-- Tabel Pesan (Contact Form)
+CREATE TABLE `contacts` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(100) NOT NULL,
+  `email` VARCHAR(100) NOT NULL,
+  `subject` VARCHAR(200) NOT NULL,
+  `message` TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert Default Data Admin & User
+INSERT INTO `users` (`name`, `email`, `password`, `role`) VALUES
+('Administrator', 'admin@store.com', '$2y$10$e0MYzXyjpJS7Pd0RVvHwHe1a9g5pG1w.E3f.e7f8', 'admin'),
+('Budi Santoso', 'budi@gmail.com', '$2y$10$e0MYzXyjpJS7Pd0RVvHwHe1a9g5pG1w.E3f.e7f8', 'user');
+                </pre>
+
+                <pre id="codeDisplayDb" class="hidden whitespace-pre-wrap leading-relaxed">
+&lt;?php
+// ==========================================================
+// 2. FILE KONEKSI DATABASE PHP (db.php)
+// ==========================================================
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db   = "bookstore_db";
+
+$conn = mysqli_connect($host, $user, $pass, $db);
+
+if (!$conn) {
+    die("Koneksi Database Gagal: " . mysqli_connect_error());
+}
+?&gt;
+                </pre>
+
+                <pre id="codeDisplayCrud" class="hidden whitespace-pre-wrap leading-relaxed">
+&lt;?php
+// ==========================================================
+// 3. FILE ADMIN CRUD PHP (admin_crud.php)
+// ==========================================================
+require_once 'db.php';
+session_start();
+
+// Validasi Akses Admin
+if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
+    die("Akses ditolak! Halaman ini hanya untuk Admin.");
+}
+
+// SIMPAN / EDIT BUKU
+if (isset($_POST['action']) && $_POST['action'] === 'save_book') {
+    $id = $_POST['id'] ?? null;
+    $title = mysqli_real_escape_string($conn, $_POST['title']);
+    $category_id = (int)$_POST['category_id'];
+    $author = mysqli_real_escape_string($conn, $_POST['author']);
+    $price = (float)$_POST['price'];
+    $stock = (int)$_POST['stock'];
+    $description = mysqli_real_escape_string($conn, $_POST['description']);
+    $image = mysqli_real_escape_string($conn, $_POST['image']);
+
+    if ($id) {
+        // UPDATE DATA BUKU
+        $query = "UPDATE books SET category_id='$category_id', title='$title', author='$author', price='$price', stock='$stock', description='$description', image='$image' WHERE id='$id'";
+    } else {
+        // INSERT DATA BUKU
+        $query = "INSERT INTO books (category_id, title, author, price, stock, description, image) VALUES ('$category_id', '$title', '$author', '$price', '$stock', '$description', '$image')";
+    }
+    
+    if(mysqli_query($conn, $query)){
+        header("Location: admin_dashboard.php?msg=success");
+    }
+}
+
+// DELETE BUKU
+if (isset($_GET['delete_book'])) {
+    $id = (int)$_GET['delete_book'];
+    mysqli_query($conn, "DELETE FROM books WHERE id='$id'");
+    header("Location: admin_dashboard.php?msg=deleted");
+}
+?&gt;
+                </pre>
+            </div>
+            
+            <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-400">Tekan tombol di bawah untuk menyalin script ke clipboard</span>
+                <button onclick="copyCodeSnippet()" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-lg transition flex items-center gap-1">
+                    <i class="fa-solid fa-copy"></i> Salin Kode Active
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl hidden z-50 text-xs flex items-center gap-2 border border-slate-700">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+        <span id="toastMsg">Notifikasi</span>
+    </div>
+
+    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+    <script>
+        // INITIAL DATABASE STATE (Emulating MySQL Tables)
+        const initialData = {
+            categories: [
+                { id: 1, name: "Pemrograman & Teknologi" },
+                { id: 2, name: "Bisnis & Keuangan" },
+                { id: 3, name: "Fiksi & Novel" },
+                { id: 4, name: "Pengembangan Diri" }
+            ],
+            books: [
+                {
+                    id: 1,
+                    category_id: 1,
+                    title: "Mastering Fullstack Web Development",
+                    author: "Rian Hidayat",
+                    price: 135000,
+                    stock: 15,
+                    image: "https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=400&q=80",
+                    description: "Panduan praktis membangun aplikasi modern menggunakan HTML, CSS, JavaScript, PHP, dan MySQL dari nol hingga siap publish."
+                },
+                {
+                    id: 2,
+                    category_id: 2,
+                    title: "Strategi Bisnis Digital Era 5.0",
+                    author: "Dewi Lestari",
+                    price: 98000,
+                    stock: 8,
+                    image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80",
+                    description: "Kunci sukses membangun ekosistem bisnis digital yang berkelanjutan di era kecerdasan buatan."
+                },
+                {
+                    id: 3,
+                    category_id: 3,
+                    title: "Jejak Langkah Di Ujung Petang",
+                    author: "Ahmad Fuadi",
+                    price: 85000,
+                    stock: 20,
+                    image: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=400&q=80",
+                    description: "Sebuah novel inspiratif tentang perjuangan, mimpi, dan keberanian menembus keterbatasan hidup."
+                },
+                {
+                    id: 4,
+                    category_id: 4,
+                    title: "Atomic Habits: Perubahan Kecil Berdampak Besar",
+                    author: "James Clear",
+                    price: 110000,
+                    stock: 12,
+                    image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=400&q=80",
+                    description: "Buku populer dunia yang mengajarkan cara membentuk kebiasaan baik dan membuang kebiasaan buruk secara konsisten."
+                }
+            ],
+            users: [
+                { id: 1, name: "Administrator", email: "admin@store.com", password: "admin123", role: "admin", created_at: "2026-01-10" },
+                { id: 2, name: "Budi Santoso", email: "budi@gmail.com", password: "user123", role: "user", created_at: "2026-02-15" }
+            ],
+            contacts: [
+                { id: 1, name: "Siti Rahma", email: "siti@gmail.com", subject: "Stok Buku Pemrograman", message: "Apakah buku Fullstack akan restok dalam waktu dekat?" }
+            ]
+        };
+
+        // Local Storage / State Initialization
+        let db = JSON.parse(localStorage.getItem('bookstore_db')) || initialData;
+        let currentUser = JSON.parse(localStorage.getItem('bookstore_user')) || null;
+        let cart = JSON.parse(localStorage.getItem('bookstore_cart')) || [];
+
+        function saveDB() {
+            localStorage.setItem('bookstore_db', JSON.stringify(db));
+        }
+
+        function saveCart() {
+            localStorage.setItem('bookstore_cart', JSON.stringify(cart));
+            updateCartBadge();
+        }
+
+        // NAVIGATION LOGIC
+        function navigateTo(pageId) {
+            // Hide all pages
+            const pages = ['home', 'catalog', 'book-detail', 'cart', 'about', 'contact', 'login', 'register', 'admin-dashboard'];
+            pages.forEach(p => {
+                const el = document.getElementById(`page-${p}`);
+                if (el) el.classList.add('hidden');
+            });
+
+            // Restrict admin dashboard
+            if (pageId === 'admin-dashboard') {
+                if (!currentUser || currentUser.role !== 'admin') {
+                    showToast("Akses ditolak! Memerlukan hak akses Admin.");
+                    navigateTo('login');
+                    return;
+                }
+            }
+
+            // Show selected page
+            const target = document.getElementById(`page-${pageId}`);
+            if (target) target.classList.remove('hidden');
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Triggers for specific pages
+            if (pageId === 'home') renderHomePage();
+            if (pageId === 'catalog') renderCatalog();
+            if (pageId === 'cart') renderCartPage();
+            if (pageId === 'admin-dashboard') renderAdminDashboard();
+        }
+
+        // UI USER STATE SYNC
+        function updateUIState() {
+            const authButtons = document.getElementById('authButtons');
+            const userMenu = document.getElementById('userMenu');
+            const userNameDisplay = document.getElementById('userNameDisplay');
+            const adminNav = document.getElementById('adminNav');
+            const userInfoHeader = document.getElementById('userInfoHeader');
+
+            if (currentUser) {
+                authButtons.classList.add('hidden');
+                userMenu.classList.remove('hidden');
+                userNameDisplay.innerText = currentUser.name;
+                userInfoHeader.innerHTML = `Login sebagai: <strong class="text-white">${currentUser.name} (${currentUser.role.toUpperCase()})</strong>`;
+
+                if (currentUser.role === 'admin') {
+                    adminNav.classList.remove('hidden');
+                } else {
+                    adminNav.classList.add('hidden');
+                }
+            } else {
+                authButtons.classList.remove('hidden');
+                userMenu.classList.add('hidden');
+                adminNav.classList.add('hidden');
+                userInfoHeader.innerHTML = `Status: <span class="text-slate-400">Tamu (Belum Login)</span>`;
+            }
+
+            updateCartBadge();
+        }
+
+        // TOAST NOTIFICATION
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.add('hidden'); }, 3000);
+        }
+
+        // ==================== AUTHENTICATION (USER & ADMIN) ====================
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const pass = document.getElementById('loginPassword').value;
+
+            const foundUser = db.users.find(u => u.email === email && u.password === pass);
+
+            if (foundUser) {
+                currentUser = foundUser;
+                localStorage.setItem('bookstore_user', JSON.stringify(currentUser));
+                updateUIState();
+                showToast(`Selamat datang kembali, ${currentUser.name}!`);
+                
+                if (currentUser.role === 'admin') {
+                    navigateTo('admin-dashboard');
+                } else {
+                    navigateTo('home');
+                }
+            } else {
+                showToast("Email atau kata sandi tidak cocok!");
+            }
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            // Check duplicate email
+            if (db.users.some(u => u.email === email)) {
+                showToast("Email sudah terdaftar! Gunakan email lain.");
+                return;
+            }
+
+            const newUser = {
+                id: db.users.length + 1,
+                name: name,
+                email: email,
+                password: password,
+                role: 'user',
+                created_at: new Date().toISOString().split('T')[0]
+            };
+
+            db.users.push(newUser);
+            saveDB();
+            showToast("Registrasi berhasil! Silakan login.");
+            navigateTo('login');
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('bookstore_user');
+            updateUIState();
+            showToast("Anda telah keluar dari sistem.");
+            navigateTo('home');
+        }
+
+        function fillLogin(email, pass) {
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('loginPassword').value = pass;
+        }
+
+        // ==================== FRONTEND HOME & CATALOG RENDER ====================
+        function renderHomePage() {
+            const container = document.getElementById('homeFeaturedBooks');
+            container.innerHTML = '';
+            
+            // Show first 4 books
+            db.books.slice(0, 4).forEach(book => {
+                const category = db.categories.find(c => c.id === book.category_id)?.name || 'Umum';
+                container.innerHTML += createBookCardHTML(book, category);
+            });
+        }
+
+        function populateCategoryFilter() {
+            const filterSelect = document.getElementById('categoryFilter');
+            filterSelect.innerHTML = '<option value="">Semua Kategori</option>';
+            db.categories.forEach(cat => {
+                filterSelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+        }
+
+        function renderCatalog() {
+            populateCategoryFilter();
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            const categoryId = document.getElementById('categoryFilter').value;
+            const grid = document.getElementById('catalogGrid');
+            grid.innerHTML = '';
+
+            const filtered = db.books.filter(b => {
+                const matchesSearch = b.title.toLowerCase().includes(searchQuery) || b.author.toLowerCase().includes(searchQuery);
+                const matchesCategory = categoryId === '' || b.category_id == categoryId;
+                return matchesSearch && matchesCategory;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400">
+                    <i class="fa-solid fa-book-open text-4xl mb-2"></i>
+                    <p>Buku tidak ditemukan.</p>
+                </div>`;
+                return;
+            }
+
+            filtered.forEach(book => {
+                const category = db.categories.find(c => c.id === book.category_id)?.name || 'Umum';
+                grid.innerHTML += createBookCardHTML(book, category);
+            });
+        }
+
+        function createBookCardHTML(book, categoryName) {
+            return `
+            <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                <div>
+                    <div class="h-48 bg-slate-100 relative overflow-hidden">
+                        <img src="${book.image}" alt="${book.title}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x300/e2e8f0/475569?text=Cover+Buku'">
+                        <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-blue-700 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+                            ${categoryName}
+                        </span>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <h3 class="font-bold text-slate-800 text-sm line-clamp-1 hover:text-blue-600 cursor-pointer" onclick="viewBookDetail(${book.id})">${book.title}</h3>
+                        <p class="text-xs text-slate-500">Penulis: <span class="font-medium text-slate-700">${book.author}</span></p>
+                        <p class="text-xs text-slate-600 line-clamp-2">${book.description}</p>
+                    </div>
+                </div>
+                <div class="p-4 pt-0 space-y-3">
+                    <div class="flex justify-between items-center border-t border-slate-50 pt-3">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block">Harga</span>
+                            <span class="font-bold text-blue-600 text-sm">Rp ${book.price.toLocaleString('id-ID')}</span>
+                        </div>
+                        <span class="text-[10px] ${book.stock > 0 ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'} font-bold px-2 py-0.5 rounded">
+                            ${book.stock > 0 ? 'Stok: ' + book.stock : 'Habis'}
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="viewBookDetail(${book.id})" class="py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">Detail</button>
+                        <button onclick="addToCart(${book.id})" class="py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-cart-plus"></i> Cart
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function handleQuickSearch(e) {
+            if (e.key === 'Enter') {
+                const query = document.getElementById('quickSearch').value;
+                navigateTo('catalog');
+                document.getElementById('searchInput').value = query;
+                renderCatalog();
+            }
+        }
+
+        // ==================== DETAIL & CART LOGIC ====================
+        function viewBookDetail(bookId) {
+            const book = db.books.find(b => b.id === bookId);
+            if (!book) return;
+
+            const category = db.categories.find(c => c.id === book.category_id)?.name || 'Umum';
+            const detailContainer = document.getElementById('bookDetailContent');
+
+            detailContainer.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="h-80 bg-slate-100 rounded-xl overflow-hidden shadow-inner">
+                    <img src="${book.image}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x400/e2e8f0/475569?text=Cover+Buku'">
+                </div>
+                <div class="md:col-span-2 space-y-4">
+                    <span class="bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1 rounded-full">${category}</span>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800">${book.title}</h1>
+                    <p class="text-sm text-slate-500">Penulis: <strong class="text-slate-700">${book.author}</strong></p>
+                    
+                    <div class="text-2xl font-bold text-blue-600">Rp ${book.price.toLocaleString('id-ID')}</div>
+                    
+                    <div class="border-t border-b border-slate-100 py-4">
+                        <h4 class="font-bold text-xs text-slate-700 uppercase tracking-wider mb-1">Deskripsi Buku</h4>
+                        <p class="text-sm text-slate-600 leading-relaxed">${book.description}</p>
+                    </div>
+
+                    <div class="flex items-center gap-4 pt-2">
+                        <span class="text-xs text-slate-500">Ketersediaan: <strong class="${book.stock > 0 ? 'text-emerald-600' : 'text-red-600'}">${book.stock > 0 ? 'Tersedia (' + book.stock + ' buku)' : 'Stok Habis'}</strong></span>
+                        <button onclick="addToCart(${book.id})" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-2">
+                            <i class="fa-solid fa-cart-shopping"></i> Tambahkan ke Keranjang
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+
+            navigateTo('book-detail');
+        }
+
+        function addToCart(bookId) {
+            const book = db.books.find(b => b.id === bookId);
+            if (!book) return;
+
+            if (book.stock <= 0) {
+                showToast("Maaf, stok buku ini sedang habis.");
+                return;
+            }
+
+            const existing = cart.find(item => item.book_id === bookId);
+            if (existing) {
+                if (existing.qty >= book.stock) {
+                    showToast("Jumlah melebih batas stok yang tersedia!");
+                    return;
+                }
+                existing.qty++;
+            } else {
+                cart.push({ book_id: bookId, qty: 1 });
+            }
+
+            saveCart();
+            showToast(`"${book.title}" ditambahkan ke keranjang.`);
+        }
+
+        function updateCartBadge() {
+            const badge = document.getElementById('cartBadge');
+            const totalItems = cart.reduce((acc, curr) => acc + curr.qty, 0);
+            if (totalItems > 0) {
+                badge.innerText = totalItems;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function renderCartPage() {
+            const container = document.getElementById('cartItemsContainer');
+            container.innerHTML = '';
+
+            if (cart.length === 0) {
+                container.innerHTML = `
+                <div class="py-12 text-center text-slate-400 space-y-3">
+                    <i class="fa-solid fa-cart-arrow-down text-5xl"></i>
+                    <p class="text-sm">Keranjang belanja Anda masih kosong.</p>
+                    <button onclick="navigateTo('catalog')" class="px-4 py-2 bg-blue-600 text-white font-semibold text-xs rounded-lg">Mulai Belanja</button>
+                </div>`;
+                document.getElementById('summaryTotalItems').innerText = "0 item";
+                document.getElementById('summaryTotalPrice').innerText = "Rp 0";
+                return;
+            }
+
+            let totalPrice = 0;
+            let totalQty = 0;
+
+            cart.forEach((item, index) => {
+                const book = db.books.find(b => b.id === item.book_id);
+                if (!book) return;
+
+                const subtotal = book.price * item.qty;
+                totalPrice += subtotal;
+                totalQty += item.qty;
+
+                container.innerHTML += `
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border border-slate-100 rounded-xl bg-slate-50/50">
+                    <div class="flex items-center gap-4 w-full sm:w-auto">
+                        <img src="${book.image}" class="w-16 h-20 object-cover rounded-lg shrink-0" onerror="this.src='https://placehold.co/100x120/e2e8f0/475569?text=Book'">
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm">${book.title}</h4>
+                            <p class="text-xs text-slate-500">Harga: Rp ${book.price.toLocaleString('id-ID')}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between w-full sm:w-auto gap-6">
+                        <!-- Qty Controls -->
+                        <div class="flex items-center border border-slate-200 rounded-lg bg-white">
+                            <button onclick="changeCartQty(${item.book_id}, -1)" class="px-3 py-1 text-slate-600 hover:bg-slate-100 font-bold text-xs">-</button>
+                            <span class="px-3 py-1 text-xs font-semibold text-slate-800">${item.qty}</span>
+                            <button onclick="changeCartQty(${item.book_id}, 1)" class="px-3 py-1 text-slate-600 hover:bg-slate-100 font-bold text-xs">+</button>
+                        </div>
+                        <span class="font-bold text-sm text-blue-600 min-w-[100px] text-right">Rp ${subtotal.toLocaleString('id-ID')}</span>
+                        <button onclick="removeFromCart(${item.book_id})" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>`;
+            });
+
+            document.getElementById('summaryTotalItems').innerText = `${totalQty} item`;
+            document.getElementById('summaryTotalPrice').innerText = `Rp ${totalPrice.toLocaleString('id-ID')}`;
+        }
+
+        function changeCartQty(bookId, delta) {
+            const item = cart.find(i => i.book_id === bookId);
+            const book = db.books.find(b => b.id === bookId);
+            if (!item || !book) return;
+
+            if (delta > 0 && item.qty >= book.stock) {
+                showToast("Batas stok maksimum tercapai!");
+                return;
+            }
+
+            item.qty += delta;
+            if (item.qty <= 0) {
+                cart = cart.filter(i => i.book_id !== bookId);
+            }
+            saveCart();
+            renderCartPage();
+        }
+
+        function removeFromCart(bookId) {
+            cart = cart.filter(i => i.book_id !== bookId);
+            saveCart();
+            renderCartPage();
+            showToast("Buku dihapus dari keranjang.");
+        }
+
+        function checkoutCart() {
+            if (cart.length === 0) return;
+            
+            if (!currentUser) {
+                showToast("Silakan login terlebih dahulu untuk checkout.");
+                navigateTo('login');
+                return;
+            }
+
+            // Reduce stock
+            cart.forEach(item => {
+                const book = db.books.find(b => b.id === item.book_id);
+                if (book) {
+                    book.stock = Math.max(0, book.stock - item.qty);
+                }
+            });
+
+            saveDB();
+            cart = [];
+            saveCart();
+            showToast("Transaksi Berhasil! Pesanan Anda sedang diproses.");
+            navigateTo('home');
+        }
+
+        // ==================== CONTACT FORM LOGIC ====================
+        function handleContactSubmit(e) {
+            e.preventDefault();
+            const newMsg = {
+                id: db.contacts.length + 1,
+                name: document.getElementById('contactName').value,
+                email: document.getElementById('contactEmail').value,
+                subject: document.getElementById('contactSubject').value,
+                message: document.getElementById('contactMessage').value
+            };
+
+            db.contacts.push(newMsg);
+            saveDB();
+            showToast("Pesan Anda telah berhasil dikirim ke Admin!");
+            e.target.reset();
+        }
+
+        // ==================== ADMIN PANEL MANAGEMENT ====================
+        function switchAdminTab(tab) {
+            ['books', 'categories', 'users', 'messages'].forEach(t => {
+                document.getElementById(`adminTab-${t}`).classList.add('hidden');
+                document.getElementById(`tabBtn-${t}`).className = "pb-3 text-slate-500 hover:text-slate-800";
+            });
+
+            document.getElementById(`adminTab-${tab}`).classList.remove('hidden');
+            document.getElementById(`tabBtn-${tab}`).className = "pb-3 tab-active";
+        }
+
+        function renderAdminDashboard() {
+            renderAdminBooks();
+            renderAdminCategories();
+            renderAdminUsers();
+            renderAdminMessages();
+        }
+
+        // Admin: Books CRUD
+        function renderAdminBooks() {
+            const tbody = document.getElementById('adminBooksTableBody');
+            tbody.innerHTML = '';
+
+            db.books.forEach(b => {
+                const catName = db.categories.find(c => c.id === b.category_id)?.name || 'N/A';
+                tbody.innerHTML += `
+                <tr class="hover:bg-slate-50 border-b border-slate-100">
+                    <td class="p-3 font-mono font-bold">#${b.id}</td>
+                    <td class="p-3"><img src="${b.image}" class="w-8 h-10 object-cover rounded"></td>
+                    <td class="p-3 font-semibold text-slate-800">${b.title}</td>
+                    <td class="p-3"><span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-semibold">${catName}</span></td>
+                    <td class="p-3">${b.author}</td>
+                    <td class="p-3 font-bold text-slate-700">Rp ${b.price.toLocaleString('id-ID')}</td>
+                    <td class="p-3">${b.stock} pcs</td>
+                    <td class="p-3 text-center space-x-2">
+                        <button onclick="openBookModal(${b.id})" class="text-blue-600 hover:text-blue-800 font-bold"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                        <button onclick="deleteBook(${b.id})" class="text-red-500 hover:text-red-700 font-bold"><i class="fa-solid fa-trash"></i> Hapus</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function openBookModal(bookId = null) {
+            const form = document.getElementById('bookForm');
+            form.reset();
+            
+            // Populate category select options
+            const select = document.getElementById('bookCategory');
+            select.innerHTML = '';
+            db.categories.forEach(c => {
+                select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            });
+
+            if (bookId) {
+                const b = db.books.find(x => x.id === bookId);
+                document.getElementById('bookModalTitle').innerText = "Edit Data Buku";
+                document.getElementById('bookId').value = b.id;
+                document.getElementById('bookTitle').value = b.title;
+                document.getElementById('bookCategory').value = b.category_id;
+                document.getElementById('bookAuthor').value = b.author;
+                document.getElementById('bookPrice').value = b.price;
+                document.getElementById('bookStock').value = b.stock;
+                document.getElementById('bookImage').value = b.image;
+                document.getElementById('bookDescription').value = b.description;
+            } else {
+                document.getElementById('bookModalTitle').innerText = "Tambah Buku Baru";
+                document.getElementById('bookId').value = '';
+            }
+
+            document.getElementById('bookModal').classList.remove('hidden');
+            document.getElementById('bookModal').classList.add('flex');
+        }
+
+        function closeBookModal() {
+            document.getElementById('bookModal').classList.add('hidden');
+            document.getElementById('bookModal').classList.remove('flex');
+        }
+
+        function saveBook(e) {
+            e.preventDefault();
+            const id = document.getElementById('bookId').value;
+            const bookData = {
+                category_id: parseInt(document.getElementById('bookCategory').value),
+                title: document.getElementById('bookTitle').value,
+                author: document.getElementById('bookAuthor').value,
+                price: parseFloat(document.getElementById('bookPrice').value),
+                stock: parseInt(document.getElementById('bookStock').value),
+                image: document.getElementById('bookImage').value || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=400&q=80',
+                description: document.getElementById('bookDescription').value
+            };
+
+            if (id) {
+                // Update
+                const index = db.books.findIndex(b => b.id == id);
+                db.books[index] = { ...db.books[index], ...bookData };
+                showToast("Data buku berhasil diperbarui.");
+            } else {
+                // Add New
+                const newId = db.books.length > 0 ? Math.max(...db.books.map(b => b.id)) + 1 : 1;
+                db.books.push({ id: newId, ...bookData });
+                showToast("Buku baru berhasil ditambahkan.");
+            }
+
+            saveDB();
+            closeBookModal();
+            renderAdminBooks();
+        }
+
+        function deleteBook(id) {
+            if (confirm("Apakah Anda yakin ingin menghapus buku ini?")) {
+                db.books = db.books.filter(b => b.id !== id);
+                saveDB();
+                renderAdminBooks();
+                showToast("Buku berhasil dihapus.");
+            }
+        }
+
+        // Admin: Categories CRUD
+        function renderAdminCategories() {
+            const tbody = document.getElementById('adminCategoriesTableBody');
+            tbody.innerHTML = '';
+
+            db.categories.forEach(c => {
+                tbody.innerHTML += `
+                <tr class="hover:bg-slate-50 border-b border-slate-100">
+                    <td class="p-3 font-mono font-bold">#CAT-${c.id}</td>
+                    <td class="p-3 font-semibold text-slate-800">${c.name}</td>
+                    <td class="p-3 text-center space-x-2">
+                        <button onclick="openCategoryModal(${c.id})" class="text-blue-600 hover:text-blue-800 font-bold"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                        <button onclick="deleteCategory(${c.id})" class="text-red-500 hover:text-red-700 font-bold"><i class="fa-solid fa-trash"></i> Hapus</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function openCategoryModal(catId = null) {
+            const form = document.getElementById('categoryForm');
+            form.reset();
+
+            if (catId) {
+                const c = db.categories.find(x => x.id === catId);
+                document.getElementById('categoryModalTitle').innerText = "Edit Kategori";
+                document.getElementById('categoryId').value = c.id;
+                document.getElementById('categoryName').value = c.name;
+            } else {
+                document.getElementById('categoryModalTitle').innerText = "Tambah Kategori Baru";
+                document.getElementById('categoryId').value = '';
+            }
+
+            document.getElementById('categoryModal').classList.remove('hidden');
+            document.getElementById('categoryModal').classList.add('flex');
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').classList.add('hidden');
+            document.getElementById('categoryModal').classList.remove('flex');
+        }
+
+        function saveCategory(e) {
+            e.preventDefault();
+            const id = document.getElementById('categoryId').value;
+            const name = document.getElementById('categoryName').value;
+
+            if (id) {
+                const index = db.categories.findIndex(c => c.id == id);
+                db.categories[index].name = name;
+                showToast("Kategori berhasil diperbarui.");
+            } else {
+                const newId = db.categories.length > 0 ? Math.max(...db.categories.map(c => c.id)) + 1 : 1;
+                db.categories.push({ id: newId, name: name });
+                showToast("Kategori baru berhasil ditambahkan.");
+            }
+
+            saveDB();
+            closeCategoryModal();
+            renderAdminCategories();
+        }
+
+        function deleteCategory(id) {
+            if (confirm("Menghapus kategori juga akan berdampak pada relasi buku terkait. Lanjutkan?")) {
+                db.categories = db.categories.filter(c => c.id !== id);
+                saveDB();
+                renderAdminCategories();
+                showToast("Kategori berhasil dihapus.");
+            }
+        }
+
+        // Admin: Users List
+        function renderAdminUsers() {
+            const tbody = document.getElementById('adminUsersTableBody');
+            tbody.innerHTML = '';
+
+            db.users.forEach(u => {
+                tbody.innerHTML += `
+                <tr class="hover:bg-slate-50 border-b border-slate-100">
+                    <td class="p-3 font-mono font-bold">#USR-${u.id}</td>
+                    <td class="p-3 font-semibold text-slate-800">${u.name}</td>
+                    <td class="p-3">${u.email}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">
+                            ${u.role.toUpperCase()}
+                        </span>
+                    </td>
+                    <td class="p-3 text-slate-500">${u.created_at || '2026-01-01'}</td>
+                </tr>`;
+            });
+        }
+
+        // Admin: Messages List
+        function renderAdminMessages() {
+            const tbody = document.getElementById('adminMessagesTableBody');
+            tbody.innerHTML = '';
+
+            if (db.contacts.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Belum ada pesan masuk.</td></tr>`;
+                return;
+            }
+
+            db.contacts.forEach(m => {
+                tbody.innerHTML += `
+                <tr class="hover:bg-slate-50 border-b border-slate-100">
+                    <td class="p-3 font-semibold text-slate-800">${m.name}</td>
+                    <td class="p-3 text-blue-600">${m.email}</td>
+                    <td class="p-3 font-bold">${m.subject}</td>
+                    <td class="p-3 text-slate-600">${m.message}</td>
+                </tr>`;
+            });
+        }
+
+        // ==================== CODE VIEWER MODAL LOGIC ====================
+        function toggleBackendCodeModal() {
+            const modal = document.getElementById('backendCodeModal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function switchCodeTab(tab) {
+            ['schema', 'db', 'crud'].forEach(t => {
+                document.getElementById(`codeDisplay${t.charAt(0).toUpperCase() + t.slice(1)}`).classList.add('hidden');
+                document.getElementById(`codeTab-${t}`).className = "px-3 py-2 font-mono text-slate-400";
+            });
+
+            const targetCode = document.getElementById(`codeDisplay${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+            targetCode.classList.remove('hidden');
+            document.getElementById(`codeTab-${tab}`).className = "px-3 py-2 font-mono text-amber-400 border-b-2 border-amber-400";
+        }
+
+        function copyCodeSnippet() {
+            let activeText = "";
+            if (!document.getElementById('codeDisplaySchema').classList.contains('hidden')) {
+                activeText = document.getElementById('codeDisplaySchema').innerText;
+            } else if (!document.getElementById('codeDisplayDb').classList.contains('hidden')) {
+                activeText = document.getElementById('codeDisplayDb').innerText;
+            } else {
+                activeText = document.getElementById('codeDisplayCrud').innerText;
+            }
+
+            const dummy = document.createElement("textarea");
+            document.body.appendChild(dummy);
+            dummy.value = activeText;
+            dummy.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+
+            showToast("Kode disalin ke clipboard!");
+        }
+
+        // INITIALIZATION ON PAGE LOAD
+        window.onload = function() {
+            updateUIState();
+            renderHomePage();
+        };
+    </script>
+</body>
+</html>
